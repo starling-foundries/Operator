@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package twirp.check;
+
+// ============================================================================
+// Primitives
+// ============================================================================
+service Check {
+    rpc Send(CheckTransaction) returns (queueID);
+    rpc Status(queueID) returns (StatusResp); 
+    rpc LastTransaction(Empty) returns(StatusResp);
+    
+}
+
+message ByteArray
+{
+    required bytes data             = 1;
+}
+message StatusResp
+{
+    ByteArray sender_pkey                    = 1;
+    //tranid should be the chain-addressable transaction id for use in ex: viewblock.io
+    bytes tranid                        = 2;
+    enum Status {
+        UNDEFINED                       = 0;
+        RECIEVED                        = 1;
+        PROCESSED                       = 2;
+        REJECTED                        = 3;     
+    }   
+    Status status                       = 3;
+}
+//Empty only requires the calling user's pubkey
+message Empty {
+    ByteArray pubkey                    = 1;
+}
+
+message queueID
+{
+    uint32 queueID                    = 1;
+}
+//this object is injected straight into the code field of the encapsulating transaction
+message CheckTransactionCoreInfo
+{
+    ByteArray senderpubkey = 1;
+    bytes toaddr           = 2;
+    ByteArray amount       = 3;
+    uint64 fee             = 4;
+    bytes operatorAddr     = 5;
+    //this nonce is account-specific within the scilla contract. The encapsulating transaction will have a nonce from the operator's wallet.
+    uint64 nonce           = 6;
+}
+
+message LastNonceResp
+{
+    uint64 nonce           = 1;
+}
+message CheckTransaction
+{
+    uint32 version                = 1;
+    CheckTransactionCoreInfo info = 2;
+    ByteArray signature           = 3;
+}
+
+message CheckStatusResp
+{
+     bytes receipt    = 1;
+     uint64 fee = 2;
+}
+
+message OperatorTargetResp
+{
+    bytes contractAddr          = 1;
+}
