@@ -41,7 +41,7 @@ let le_int =
     end
     
 (*constant*)
-let _zero = Uint128 0
+let const_zero = Uint128 0
 
 (***************************************************)
 (*             The contract definition             *)
@@ -59,7 +59,7 @@ field balances : Map ByStr20 Uint128 =
   let m = Emp ByStr20 Uint128 in
     builtin put m owner totalSupply
 field allowed : Map ByStr20 (Map ByStr20 Uint128) = Emp ByStr20 (Map ByStr20 Uint128)
-field _totalSupply: Uint128 = totalSupply
+field totalSupply: Uint128 = totalSupply
  
 transition name()
   e = { _eventname : "TokenName"; tokenName : name };
@@ -77,7 +77,7 @@ transition granularity()
 end
 
 transition totalSupply ()
-  t<-_totalSupply;
+  t<-totalSupply;
  e = { _eventname : "TotalSupply"; totalSupply : t };
  event e
  end
@@ -89,7 +89,7 @@ transition balanceOf (tokenOwner : ByStr20)
     e = { _eventname : "BalanceOf"; tokenOwner : tokenOwner; balance : v };
     event e
   | None =>
-    e = { _eventname : "BalanceOf"; tokenOwner : tokenOwner; balance : _zero };
+    e = { _eventname : "BalanceOf"; tokenOwner : tokenOwner; balance : const_zero };
     event e
   end
 end
@@ -138,7 +138,7 @@ transition isOperatorFor ( operator : ByStr20, tokenHolder : ByStr20)
     end
  end
 
-transition Send (to : ByStr20 , amount : Uint128 , _userData : String)
+transition Send (to : ByStr20 , amount : Uint128 , userData : String)
 isMultiple1= builtin div amount  granularity;
 isMultiple2= builtin mul isMultiple1  granularity;
 notGranular="Not granular";
@@ -161,25 +161,25 @@ isMultiple=builtin eq isMultiple2 amount ;
         | Some x =>
            new_to_bal = builtin add x amount;
            balances[to] := new_to_bal;
-           e = { _eventname : "SentToken"; from : _sender ; to : to ; userData : _userData ; amount : amount   };
+           e = { _eventname : "SentToken"; from : _sender ; to : to ; userData : userData ; amount : amount   };
            event e
         | None =>
            balances[to] := amount;
-           e = { _eventname : "SentToken"; from : _sender ; to : to ; userData : _userData ; amount : amount   };
+           e = { _eventname : "SentToken"; from : _sender ; to : to ; userData : userData ; amount : amount   };
            event e
            end
     | False =>
       (* balance not sufficient. *)
-       	e = { _eventname : "Send Error"; from : _sender ; to : to ; userData : _userData ; amount : amount ; code : inSuffBal  };
+       	e = { _eventname : "Send Error"; from : _sender ; to : to ; userData : userData ; amount : amount ; code : inSuffBal  };
         event e
     end
   | None =>
     (* no balance record, can't transfer *)
-     e = { _eventname : "Send Error"; from : _sender ; to : to ; userData : _userData ; amount : amount ; code : noBal  };
+     e = { _eventname : "Send Error"; from : _sender ; to : to ; userData : userData ; amount : amount ; code : noBal  };
      event e
    end
    | False =>
-     e = { _eventname : "Send Error"; from : _sender ; to : to ; userData : _userData ; amount : amount ; code : notGranular  };
+     e = { _eventname : "Send Error"; from : _sender ; to : to ; userData : userData ; amount : amount ; code : notGranular  };
      event e
    end
 end
@@ -265,7 +265,7 @@ isMultiple2= builtin mul isMultiple1  granularity;
 notgranular="Not granular";
 insuffBal="Balance insuffuciient";
 noBal="No balance record";
-t<-_totalSupply;
+t<-totalSupply;
 isMultiple=builtin eq isMultiple2 amount ;
  match  isMultiple with
   | True =>
@@ -278,8 +278,8 @@ isMultiple=builtin eq isMultiple2 amount ;
       (* subtract amount from _sender and add it to to *)
       new_sender_bal = builtin sub b amount;
       balances[_sender] := new_sender_bal;
-      _newSupply=builtin sub t amount;
-      _totalSupply:=_newSupply;
+      newSupply=builtin sub t amount;
+      totalSupply:=newSupply;
       e = { _eventname : "Burnt"; owner: _sender ; amount : _amount ; data : data };
       event e	
     | False =>
@@ -301,7 +301,7 @@ end
 transition operatorBurn (from : ByStr20, amount : Uint128 , userData : String , operatorData : String)
 allowed_from <-allowed [_sender][from];
 balFrom <- balances[from];
-ts <-_totalSupply;
+ts <-totalSupply;
 isMultiple1= builtin div amount  granularity;
 isMultiple2= builtin mul isMultiple1  granularity;
 notgranular="Not granular";
@@ -329,8 +329,8 @@ match  isMultiple with
         new_from_bal = builtin sub m1 amount;
         balances[from] := new_from_bal;
         (* total supply in circulation is also decreased  *)
-        _newSupply=builtin sub ts amount;
-        _totalSupply:=_newSupply;
+        newSupply=builtin sub ts amount;
+        totalSupply:=newSupply;
         new_allowed = builtin sub m1 amount;
         allowed[_sender][from] := new_allowed;
         e = { _eventname : "Operator Burnt"; sender: _sender; from : from ; amount : amount ; userData : userData ; operatorData : operatorData };
@@ -352,4 +352,11 @@ match  isMultiple with
   e = { _eventname : "Operator Burn Error"; from : _sender ; code : notgranular  };
   event e
 end
+end
+
+(*Implementation of non-erc777 additions loosely based on EIP-965*)
+
+transition sendbySignature(from : ByStr20, to : ByStr20, amount : Uint128 , fee : Uint128 , operatorAddr : ByStr20, signature: ByStr33)
+    e = { _eventname : "Send by Sig Called"; from : _sender ; code : "Unimplemented feature"  };
+        event e
 end

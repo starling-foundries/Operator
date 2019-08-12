@@ -1,0 +1,11 @@
+{
+  "name": "deploter",
+  "version": "1.0.0",
+  "description": "A simple contract deployer script",
+  "main": "deploy.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Cameron Sajedi",
+  "license": "ISC"
+}

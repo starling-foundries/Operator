@@ -1,0 +1,1 @@
+retool do protoc --proto_path=. --twirp_out=. --go_out=. rpc/server/service.proto

@@ -6,20 +6,24 @@ package twirp.check;
 // Primitives
 // ============================================================================
 service Check {
+    //sends the signed transaction from the client to the operator.
     rpc Send(CheckTransaction) returns (queueID);
-    rpc Status(queueID) returns (StatusResp); 
+    //retrieves the transaction information from the perspective of the operator
+    rpc Status(queueID) returns (StatusResp);
+    //same as above but client does not need to know their last txID  - useful for finding nonce to pack transaction for signing. Should only be exposed to authenticated clients.
     rpc LastTransaction(Empty) returns(StatusResp);
     
 }
 
 message ByteArray
 {
-    required bytes data             = 1;
+    bytes data             = 1;
 }
 message StatusResp
 {
     ByteArray sender_pkey                    = 1;
-    //tranid should be the chain-addressable transaction id for use in ex: viewblock.io
+
+    //tranid should be the chain-addressable transaction id for use in ex: viewblock.io. it is set to nil if this is unknown.
     bytes tranid                        = 2;
     enum Status {
         UNDEFINED                       = 0;
@@ -34,6 +38,7 @@ message Empty {
     ByteArray pubkey                    = 1;
 }
 
+//indexes the sent transaction's status within the context of the operator. 
 message queueID
 {
     uint32 queueID                    = 1;
@@ -44,10 +49,11 @@ message CheckTransactionCoreInfo
     ByteArray senderpubkey = 1;
     bytes toaddr           = 2;
     ByteArray amount       = 3;
-    uint64 fee             = 4;
+    ByteArray fee          = 4;
     bytes operatorAddr     = 5;
-    //this nonce is account-specific within the scilla contract. The encapsulating transaction will have a nonce from the operator's wallet.
+    //this nonce is account-specific within the scilla contract. The encapsulating transaction will have a nonce from the operator's wallet. this nonce should always be increasing
     uint64 nonce           = 6;
+    ByteArray signature    = 7; //signatures can be validated if required
 }
 
 message LastNonceResp
@@ -58,15 +64,15 @@ message CheckTransaction
 {
     uint32 version                = 1;
     CheckTransactionCoreInfo info = 2;
-    ByteArray signature           = 3;
 }
 
 message CheckStatusResp
 {
-     bytes receipt    = 1;
-     uint64 fee = 2;
+     bytes receipt      = 1;
+     ByteArray fee      = 2;
 }
 
+//responds with the address of the on-chain contract this server is operating.
 message OperatorTargetResp
 {
     bytes contractAddr          = 1;
