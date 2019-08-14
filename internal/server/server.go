@@ -35,19 +35,18 @@ func (s *Server) SendCheck(ctx context.Context, check *pb.CheckTransaction) (*pb
 }
 
 // retrieves the transaction information from the perspective of the operator
-func (s *Server) Status(context.Context, reciept *pb.QueueID) (*pb.StatusResp, error) { 
+func (s *Server) Status(ctx context.Context, reciept *pb.QueueID) (*pb.StatusResp, error) {
 	//Check the sender is authorized
-	if reciept.QueueID.String() == nil {
+	if !(reciept.QueueID > 0) {
 		return nil, twirp.InvalidArgumentError("ID:", "ID must be provided")
 	}
 
 	//TODO:lookup the reciept in the database
-	var resp StatusResp
+	// var resp StatusResp
 
-
-	//do more processing 
-	return resp, nil
- }
+	//do more processing
+	return nil, nil
+}
 
 // Gets the status of the last transaction sent by this user to this operator
 func (s *Server) GetLastTransaction(context.Context, *pb.Empty) (*pb.StatusResp, error) {
